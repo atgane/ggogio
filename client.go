@@ -1,27 +1,13 @@
 package ggogio
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net"
 )
 
-const (
-	clientDefaultSendChanSize = 10
-	clientDefaultRecvChanSize = 10
-	clientDefaultBufSize      = 1024
-)
-
-type clientId uint64
-
-func (c clientId) String() string {
-	return fmt.Sprintf("%d", c)
-}
-
 type client struct {
 	Client
-	session *Session
 	conn    net.Conn
 	recvBuf chan []byte
 	sendBuf chan []byte
@@ -31,26 +17,23 @@ type client struct {
 type Client interface {
 	// Init() method is called when Server instance creates Client
 	// after tcp connection success
-	Init(*Server) error
+	Init(*Server, *Session) error
 
 	// OnLoop() method is ... 아 설명하기 귀찮다...
-	OnLoop(*Session)
+	OnLoop()
 
 	// Close() method is called when Client called Session.Close().
 	// implement termination connection using this function.
 	Close()
 }
 
-func newClient(conn net.Conn, ic Client, s *Server) *client {
+func newClient(conn net.Conn, ic Client, s *Server, session *Session) *client {
 	c := new(client)
 	c.Client = ic
 	c.conn = conn
-	c.recvBuf = make(chan []byte, clientDefaultSendChanSize)
-	c.sendBuf = make(chan []byte, clientDefaultRecvChanSize)
-	c.done = make(chan bool, 1)
-
-	session := NewSession(c.done, c.sendBuf, c.recvBuf)
-	c.session = session
+	c.recvBuf = session.recvbuf
+	c.sendBuf = session.sendbuf
+	c.done = session.done
 
 	go c.onLoop()
 
@@ -71,7 +54,7 @@ func (c *client) onLoop() {
 			c.close()
 			return
 		default:
-			c.Client.OnLoop(c.session)
+			c.Client.OnLoop()
 		}
 	}
 }

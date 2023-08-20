@@ -51,11 +51,16 @@ func (s *Server) Listen() error {
 		}
 
 		ic := s.factory.Create()
+		recvBuf := make(chan []byte, clientDefaultSendChanSize)
+		sendBuf := make(chan []byte, clientDefaultRecvChanSize)
+		done := make(chan bool, 1)
 
-		if err := ic.Init(s); err != nil {
+		session := NewSession(done, sendBuf, recvBuf)
+
+		if err := ic.Init(s, session); err != nil {
 			log.Printf("client interface initialize failed: %s\n", err)
 		}
-		c := newClient(conn, ic, s)
+		c := newClient(conn, ic, s, session)
 
 		s.addChan <- c
 

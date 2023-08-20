@@ -4,12 +4,12 @@ package ggogio
 type Session struct {
 	Config interface{}
 
-	recvbuf <-chan []byte
-	sendbuf chan<- []byte
-	done    chan<- bool
+	recvbuf chan []byte
+	sendbuf chan []byte
+	done    chan bool
 }
 
-func NewSession(done chan<- bool, send chan<- []byte, recv <-chan []byte) *Session {
+func NewSession(done chan bool, send chan []byte, recv chan []byte) *Session {
 	s := new(Session)
 	s.done = done
 	s.sendbuf = send
