@@ -3,16 +3,18 @@ package ggogio
 import (
 	"log"
 	"net"
+	"sync"
 )
 
 type Server struct {
 	Config  interface{}
 	factory Factory
 
-	addr       string
-	sessions   []*Session
-	addChan    chan *Session
-	removeChan chan *Session
+	addr         string
+	sessions     []*Session
+	sessionsLock *sync.RWMutex
+	addChan      chan *Session
+	removeChan   chan *Session
 }
 
 func NewServer(addr string, f Factory) *Server {
@@ -74,14 +76,25 @@ func (s *Server) serve() {
 	for {
 		select {
 		case session := <-s.addChan:
-			s.sessions = append(s.sessions, session)
-			log.Printf("client connect: %s\n", session.Addr)
+			{
+				s.sessionsLock.Lock()
+				defer s.sessionsLock.Unlock()
+
+				s.sessions = append(s.sessions, session)
+				log.Printf("client connect: %s\n", session.Addr)
+			}
 		case session := <-s.removeChan:
-			for i := range s.sessions {
-				if s.sessions[i] == session {
-					s.sessions = append(s.sessions[:i], s.sessions[i+1:]...)
-					log.Printf("client leave: %s\n", session.Addr)
-					break
+			{
+				s.sessionsLock.RLock()
+				defer s.sessionsLock.RUnlock()
+				for i := range s.sessions {
+					if s.sessions[i] == session {
+						e := len(s.sessions) - 1
+						s.sessions[e], s.sessions[i] = s.sessions[i], s.sessions[e]
+						s.sessions = s.sessions[:e]
+						log.Printf("client leave: %s\n", session.Addr)
+						break
+					}
 				}
 			}
 		}
