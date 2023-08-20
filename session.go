@@ -2,6 +2,8 @@ package ggogio
 
 // 아 설명하기 정말 귀찮다...
 type Session struct {
+	Config interface{}
+
 	sendBufs chan<- []byte
 	recvBufs <-chan []byte
 	done     chan<- bool
@@ -25,4 +27,12 @@ func (s *Session) Write(request []byte) {
 
 func (s *Session) Read() []byte {
 	return <-s.recvBufs
+}
+
+func (s *Session) SetConfig(c interface{}) {
+	s.Config = c
+}
+
+func (s *Session) GetConfig() interface{} {
+	return s.Config
 }
