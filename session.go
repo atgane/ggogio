@@ -4,16 +4,16 @@ package ggogio
 type Session struct {
 	Config interface{}
 
-	sendBufs chan<- []byte
-	recvBufs <-chan []byte
-	done     chan<- bool
+	recvbuf <-chan []byte
+	sendbuf chan<- []byte
+	done    chan<- bool
 }
 
-func NewSession(done chan<- bool, recv <-chan []byte, send chan<- []byte) *Session {
+func NewSession(done chan<- bool, send chan<- []byte, recv <-chan []byte) *Session {
 	s := new(Session)
 	s.done = done
-	s.recvBufs = recv
-	s.sendBufs = send
+	s.sendbuf = send
+	s.recvbuf = recv
 	return s
 }
 
@@ -22,11 +22,11 @@ func (s *Session) Close() {
 }
 
 func (s *Session) Write(request []byte) {
-	s.sendBufs <- request
+	s.sendbuf <- request
 }
 
 func (s *Session) Read() []byte {
-	return <-s.recvBufs
+	return <-s.recvbuf
 }
 
 func (s *Session) SetConfig(c interface{}) {

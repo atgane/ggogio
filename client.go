@@ -1,6 +1,8 @@
 package ggogio
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"net"
 )
@@ -11,13 +13,19 @@ const (
 	clientDefaultBufSize      = 1024
 )
 
+type clientId uint64
+
+func (c clientId) String() string {
+	return fmt.Sprintf("%d", c)
+}
+
 type client struct {
 	Client
-	session  *Session
-	conn     net.Conn
-	sendBufs chan []byte
-	recvBufs chan []byte
-	done     chan bool
+	session *Session
+	conn    net.Conn
+	recvBuf chan []byte
+	sendBuf chan []byte
+	done    chan bool
 }
 
 type Client interface {
@@ -37,11 +45,11 @@ func newClient(conn net.Conn, ic Client, s *Server) *client {
 	c := new(client)
 	c.Client = ic
 	c.conn = conn
-	c.sendBufs = make(chan []byte, clientDefaultSendChanSize)
-	c.recvBufs = make(chan []byte, clientDefaultRecvChanSize)
+	c.recvBuf = make(chan []byte, clientDefaultSendChanSize)
+	c.sendBuf = make(chan []byte, clientDefaultRecvChanSize)
 	c.done = make(chan bool, 1)
 
-	session := NewSession(c.done, c.recvBufs, c.sendBufs)
+	session := NewSession(c.done, c.sendBuf, c.recvBuf)
 	c.session = session
 
 	go c.onLoop()
@@ -50,7 +58,7 @@ func newClient(conn net.Conn, ic Client, s *Server) *client {
 }
 
 func (c *client) close() {
-	for len(c.recvBufs) > 0 {
+	for len(c.sendBuf) > 0 {
 	}
 	c.conn.Close()
 	c.Client.Close()
@@ -78,17 +86,22 @@ func (c *client) read() {
 		default:
 			n, err := c.conn.Read(buf)
 			if err != nil {
+				if err == io.EOF {
+					log.Printf("client connection closed: %s\n", err)
+					c.close()
+					return
+				}
 				log.Printf("read failed: %s\n", err)
 			}
-			c.sendBufs <- buf[:n]
+			c.recvBuf <- buf[:n]
 		}
 
-		if len(c.sendBufs) == clientDefaultSendChanSize {
+		if len(c.recvBuf) == clientDefaultSendChanSize {
 			buf := []byte{}
 			for i := 0; i < clientDefaultSendChanSize; i++ {
-				buf = append(buf, <-c.sendBufs...)
+				buf = append(buf, <-c.recvBuf...)
 			}
-			c.sendBufs <- buf
+			c.recvBuf <- buf
 		}
 	}
 }
@@ -99,7 +112,7 @@ func (c *client) write() {
 		case <-c.done:
 			return
 		default:
-			buf := <-c.recvBufs
+			buf := <-c.sendBuf
 
 			write := 0
 			for write != len(buf) {
