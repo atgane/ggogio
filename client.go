@@ -21,7 +21,8 @@ type Client interface {
 	// after tcp connection success
 	Init(*Server, *Session) error
 
-	// OnLoop() method is ... 아 설명하기 귀찮다...
+	// OnLoop() method is called repeatedly and asynchronously
+	// when Init method end.
 	OnLoop()
 
 	// Close() method is called when Client called Session.Close().
