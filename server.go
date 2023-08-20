@@ -72,6 +72,16 @@ func (s *Server) Listen() error {
 	}
 }
 
+func (s *Server) Query(condition func(*Session) bool) []*Session {
+	sessions := []*Session{}
+	for _, session := range s.sessions {
+		if condition(session) {
+			sessions = append(sessions, session)
+		}
+	}
+	return sessions
+}
+
 func (s *Server) serve() {
 	for {
 		select {
@@ -99,14 +109,4 @@ func (s *Server) serve() {
 			}
 		}
 	}
-}
-
-func (s *Server) Query(condition func(*Session) bool) []*Session {
-	sessions := []*Session{}
-	for _, session := range s.sessions {
-		if condition(session) {
-			sessions = append(sessions, session)
-		}
-	}
-	return sessions
 }
