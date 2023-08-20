@@ -12,7 +12,7 @@ type Server struct {
 
 	addr         string
 	sessions     []*Session
-	sessionsLock *sync.RWMutex
+	sessionsLock sync.RWMutex
 	addChan      chan *Session
 	removeChan   chan *Session
 }
@@ -23,8 +23,8 @@ func NewServer(addr string, f Factory) *Server {
 
 	s.addr = addr
 	s.sessions = []*Session{}
-	s.addChan = make(chan *Session)
-	s.removeChan = make(chan *Session)
+	s.addChan = make(chan *Session, serverAddChanSize)
+	s.removeChan = make(chan *Session, serverRemoveChanSize)
 	return s
 }
 
