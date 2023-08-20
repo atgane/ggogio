@@ -26,11 +26,11 @@ func NewServer(addr string, f Factory) *Server {
 	return s
 }
 
-func (s *Server) SetConfig(c interface{}) {
+func (s *Server) SetServerConfig(c interface{}) {
 	s.Config = c
 }
 
-func (s *Server) GetConfig() interface{} {
+func (s *Server) GetServerConfig() interface{} {
 	return s.Config
 }
 

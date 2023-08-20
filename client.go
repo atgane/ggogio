@@ -50,7 +50,10 @@ func newClient(conn net.Conn, ic Client, s *Server) *client {
 }
 
 func (c *client) close() {
+	for len(c.recvBufs) > 0 {
+	}
 	c.conn.Close()
+	c.Client.Close()
 }
 
 func (c *client) onLoop() {
