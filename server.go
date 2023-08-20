@@ -73,6 +73,8 @@ func (s *Server) Listen() error {
 }
 
 func (s *Server) Query(condition func(*Session) bool) []*Session {
+	s.sessionsLock.RLock()
+	defer s.sessionsLock.RUnlock()
 	sessions := []*Session{}
 	for _, session := range s.sessions {
 		if condition(session) {
