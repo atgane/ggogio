@@ -55,10 +55,7 @@ func (s *Server) Listen() error {
 		if err := ic.Init(); err != nil {
 			log.Printf("client interface initialize failed: %s\n", err)
 		}
-		c, err := newClient(conn, ic, s)
-		if err != nil {
-			log.Printf("client interface connect failed: %s\n", err)
-		}
+		c := newClient(conn, ic, s)
 
 		s.addChan <- c
 

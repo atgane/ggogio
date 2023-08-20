@@ -13,6 +13,7 @@ const (
 
 type client struct {
 	Client
+	session  *Session
 	conn     net.Conn
 	sendBufs chan []byte
 	recvBufs chan []byte
@@ -24,12 +25,15 @@ type Client interface {
 	// after tcp connection success
 	Init() error
 
-	// Connect() method is ... 아 설명하기 귀찮다...
-	Connect(server *Server, recv <-chan []byte, write chan<- []byte) error
-	Close() error
+	// OnLoop() method is ... 아 설명하기 귀찮다...
+	OnLoop(*Session)
+
+	// Close() method is called when Client called Session.Close().
+	// implement termination connection using this function.
+	Close()
 }
 
-func newClient(conn net.Conn, ic Client, s *Server) (*client, error) {
+func newClient(conn net.Conn, ic Client, s *Server) *client {
 	c := new(client)
 	c.Client = ic
 	c.conn = conn
@@ -37,8 +41,28 @@ func newClient(conn net.Conn, ic Client, s *Server) (*client, error) {
 	c.recvBufs = make(chan []byte, clientDefaultRecvChanSize)
 	c.done = make(chan bool, 1)
 
-	err := c.Client.Connect(s, c.recvBufs, c.sendBufs)
-	return c, err
+	session := NewSession(c.done, c.recvBufs, c.sendBufs)
+	c.session = session
+
+	go c.onLoop()
+
+	return c
+}
+
+func (c *client) close() {
+	c.conn.Close()
+}
+
+func (c *client) onLoop() {
+	for {
+		select {
+		case <-c.done:
+			c.close()
+			return
+		default:
+			c.Client.OnLoop(c.session)
+		}
+	}
 }
 
 func (c *client) read() {
