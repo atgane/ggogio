@@ -4,6 +4,8 @@ package ggogio
 type Session struct {
 	Config interface{}
 
+	Addr string
+
 	recvbuf chan []byte
 	sendbuf chan []byte
 	done    chan bool

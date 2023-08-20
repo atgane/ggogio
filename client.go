@@ -8,6 +8,8 @@ import (
 
 type client struct {
 	Client
+	server  *Server
+	session *Session
 	conn    net.Conn
 	recvBuf chan []byte
 	sendBuf chan []byte
@@ -27,9 +29,11 @@ type Client interface {
 	Close()
 }
 
-func newClient(conn net.Conn, ic Client, s *Server, session *Session) *client {
+func newClient(conn net.Conn, ic Client, server *Server, session *Session) *client {
 	c := new(client)
 	c.Client = ic
+	c.server = server
+	c.session = session
 	c.conn = conn
 	c.recvBuf = session.recvbuf
 	c.sendBuf = session.sendbuf
@@ -43,8 +47,9 @@ func newClient(conn net.Conn, ic Client, s *Server, session *Session) *client {
 func (c *client) close() {
 	for len(c.sendBuf) > 0 {
 	}
-	c.conn.Close()
+	c.server.removeChan <- c.session
 	c.Client.Close()
+	log.Print("client connection closed\n")
 }
 
 func (c *client) onLoop() {
@@ -70,7 +75,6 @@ func (c *client) read() {
 			n, err := c.conn.Read(buf)
 			if err != nil {
 				if err == io.EOF {
-					log.Printf("client connection closed: %s\n", err)
 					c.close()
 					return
 				}
@@ -101,6 +105,10 @@ func (c *client) write() {
 			for write != len(buf) {
 				w, err := c.conn.Write(buf)
 				if err != nil {
+					if err == io.EOF {
+						c.close()
+						return
+					}
 					log.Printf("write failed: %s\n", err)
 				}
 				write += w

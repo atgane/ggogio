@@ -10,9 +10,9 @@ type Server struct {
 	factory Factory
 
 	addr       string
-	clients    []*client
-	addChan    chan *client
-	removeChan chan *client
+	sessions   []*Session
+	addChan    chan *Session
+	removeChan chan *Session
 }
 
 func NewServer(addr string, f Factory) *Server {
@@ -20,9 +20,9 @@ func NewServer(addr string, f Factory) *Server {
 	s.factory = f
 
 	s.addr = addr
-	s.clients = []*client{}
-	s.addChan = make(chan *client)
-	s.removeChan = make(chan *client)
+	s.sessions = []*Session{}
+	s.addChan = make(chan *Session)
+	s.removeChan = make(chan *Session)
 	return s
 }
 
@@ -56,13 +56,14 @@ func (s *Server) Listen() error {
 		done := make(chan bool, 1)
 
 		session := NewSession(done, sendBuf, recvBuf)
+		session.Addr = conn.RemoteAddr().String()
 
 		if err := ic.Init(s, session); err != nil {
 			log.Printf("client interface initialize failed: %s\n", err)
 		}
 		c := newClient(conn, ic, s, session)
 
-		s.addChan <- c
+		s.addChan <- session
 
 		go c.read()
 		go c.write()
@@ -72,14 +73,14 @@ func (s *Server) Listen() error {
 func (s *Server) serve() {
 	for {
 		select {
-		case c := <-s.addChan:
-			s.clients = append(s.clients, c)
-			log.Printf("client connect: %s\n", c.conn.RemoteAddr().String())
-		case c := <-s.removeChan:
-			for i := range s.clients {
-				if s.clients[i] == c {
-					s.clients = append(s.clients[:i], s.clients[i+1:]...)
-					log.Printf("client leave: %s\n", c.conn.RemoteAddr().String())
+		case session := <-s.addChan:
+			s.sessions = append(s.sessions, session)
+			log.Printf("client connect: %s\n", session.Addr)
+		case session := <-s.removeChan:
+			for i := range s.sessions {
+				if s.sessions[i] == session {
+					s.sessions = append(s.sessions[:i], s.sessions[i+1:]...)
+					log.Printf("client leave: %s\n", session.Addr)
 					break
 				}
 			}
