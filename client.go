@@ -57,6 +57,7 @@ func (c *client) onLoop() {
 	for {
 		select {
 		case <-c.done:
+			c.done <- true
 			c.close()
 			return
 		default:
@@ -71,6 +72,7 @@ func (c *client) read() {
 	for {
 		select {
 		case <-c.done:
+			c.done <- true
 			return
 		default:
 			n, err := c.conn.Read(buf)
@@ -98,6 +100,7 @@ func (c *client) write() {
 	for {
 		select {
 		case <-c.done:
+			c.done <- true
 			return
 		default:
 			buf := <-c.sendBuf
