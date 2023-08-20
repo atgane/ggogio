@@ -88,15 +88,15 @@ func (s *Server) serve() {
 	for {
 		select {
 		case session := <-s.addChan:
-			{
+			func() {
 				s.sessionsLock.Lock()
 				defer s.sessionsLock.Unlock()
 
 				s.sessions = append(s.sessions, session)
 				log.Printf("client connect: %s\n", session.Addr)
-			}
+			}()
 		case session := <-s.removeChan:
-			{
+			func() {
 				s.sessionsLock.RLock()
 				defer s.sessionsLock.RUnlock()
 				for i := range s.sessions {
@@ -108,7 +108,7 @@ func (s *Server) serve() {
 						break
 					}
 				}
-			}
+			}()
 		}
 	}
 }
