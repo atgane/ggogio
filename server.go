@@ -52,7 +52,7 @@ func (s *Server) Listen() error {
 
 		ic := s.factory.Create()
 
-		if err := ic.Init(); err != nil {
+		if err := ic.Init(s); err != nil {
 			log.Printf("client interface initialize failed: %s\n", err)
 		}
 		c := newClient(conn, ic, s)

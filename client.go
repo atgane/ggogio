@@ -23,7 +23,7 @@ type client struct {
 type Client interface {
 	// Init() method is called when Server instance creates Client
 	// after tcp connection success
-	Init() error
+	Init(*Server) error
 
 	// OnLoop() method is ... 아 설명하기 귀찮다...
 	OnLoop(*Session)
