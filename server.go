@@ -12,6 +12,7 @@ type Server struct {
 	factory Factory
 
 	addr         string
+	listener     net.Listener
 	sessions     []*Session
 	sessionsLock sync.RWMutex
 	addChan      chan *Session
@@ -43,6 +44,7 @@ func (s *Server) GetServerConfig() interface{} {
 // run TCP socket server.
 func (s *Server) Listen() error {
 	l, err := net.Listen("tcp", s.addr)
+	s.listener = l
 	if err != nil {
 		return err
 	}
