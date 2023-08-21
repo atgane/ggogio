@@ -6,6 +6,7 @@ import (
 	"sync"
 )
 
+// Server is a instance to run TCP socket server.
 type Server struct {
 	Config  interface{}
 	factory Factory
@@ -17,6 +18,7 @@ type Server struct {
 	removeChan   chan *Session
 }
 
+// create new server.
 func NewServer(addr string, f Factory) *Server {
 	s := new(Server)
 	s.factory = f
@@ -28,14 +30,17 @@ func NewServer(addr string, f Factory) *Server {
 	return s
 }
 
+// set server config
 func (s *Server) SetServerConfig(c interface{}) {
 	s.Config = c
 }
 
+// get server config
 func (s *Server) GetServerConfig() interface{} {
 	return s.Config
 }
 
+// run TCP socket server.
 func (s *Server) Listen() error {
 	l, err := net.Listen("tcp", s.addr)
 	if err != nil {
@@ -57,7 +62,7 @@ func (s *Server) Listen() error {
 		sendBuf := make(chan []byte, clientDefaultRecvChanSize)
 		done := make(chan bool, 1)
 
-		session := NewSession(done, sendBuf, recvBuf)
+		session := newSession(done, sendBuf, recvBuf)
 		session.Addr = conn.RemoteAddr().String()
 
 		if err := ic.Init(s, session); err != nil {
@@ -72,6 +77,7 @@ func (s *Server) Listen() error {
 	}
 }
 
+// find other clients with condition function in specific client.
 func (s *Server) Query(condition func(*Session) bool) []*Session {
 	s.sessionsLock.RLock()
 	defer s.sessionsLock.RUnlock()

@@ -16,6 +16,8 @@ type client struct {
 	done    chan bool
 }
 
+// Client is an interface for handling the connection
+// of the client connected to the server.
 type Client interface {
 	// Init() method is called when Server instance creates Client
 	// after tcp connection success
@@ -86,6 +88,7 @@ func (c *client) read() {
 			c.recvBuf <- buf[:n]
 		}
 
+		// when c.recvBuf maxed
 		if len(c.recvBuf) == clientDefaultSendChanSize {
 			buf := []byte{}
 			for i := 0; i < clientDefaultSendChanSize; i++ {
