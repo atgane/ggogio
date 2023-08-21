@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type testFactory struct{}
+type testEchoFactory struct{}
 
-func (t testFactory) Create() Client {
-	return new(testClient)
+func (t testEchoFactory) Create() Client {
+	return new(testEchoClient)
 }
 
 var testServerScenario []serverScenario = []serverScenario{
@@ -30,13 +30,34 @@ type serverState struct {
 	client net.Conn
 }
 
+type testEchoClient struct {
+	server  *Server
+	session *Session
+}
+
+func (t *testEchoClient) Init(server *Server, session *Session) error {
+	t.server = server
+	t.session = session
+
+	return nil
+}
+
+func (t *testEchoClient) OnLoop() {
+	data := t.session.Read()
+	t.session.Write(data)
+}
+
+func (t *testEchoClient) Close() {
+	t.session.Close()
+}
+
 func TestServer(t *testing.T) {
 	func() {
 		state := new(serverState)
 
 		// init test
 		addr := ":0"
-		s := NewServer(addr, testFactory{})
+		s := NewServer(addr, testEchoFactory{})
 		state.server = s
 		go s.Listen()
 
