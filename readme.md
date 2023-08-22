@@ -75,3 +75,9 @@ func main() {
 	}
 }
 ```
+
+4. connect with telnet
+
+```sh
+telnet localhost 10000
+```
