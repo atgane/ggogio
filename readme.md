@@ -2,7 +2,7 @@
 
 ggogio is a lightweight tcp server framework ... world like to be. It aims for simple use and lightness, maybe.
 
-# how to use
+# 😶‍🌫️ how to use
 
 1. Create a sample chatting client.
 
