@@ -1,6 +1,6 @@
 # 👍 ggogio
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/atgane/ggogio)](https://goreportcard.com/report/github.com/atgane/ggogio)
+[![Go Report Card](https://goreportcard.com/badge/github.com/atgane/ggogio)](https://goreportcard.com/report/github.com/atgane/ggogio) [![golang-test](https://github.com/atgane/ggogio/actions/workflows/test.yml/badge.svg)](https://github.com/atgane/ggogio/actions/workflows/test.yml)
 
 ggogio is a lightweight tcp server framework ... world like to be. It aims for simple use and lightness, maybe.
 
