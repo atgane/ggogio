@@ -79,7 +79,7 @@ func (c *client) read() {
 		default:
 			n, err := c.conn.Read(buf)
 			if err != nil {
-				log.Printf("read failed: %s\n", err)
+				log.Printf("read failed. close client connection: %s\n", err)
 				c.close()
 				return
 			}
