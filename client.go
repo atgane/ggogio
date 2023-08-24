@@ -79,11 +79,9 @@ func (c *client) read() {
 		default:
 			n, err := c.conn.Read(buf)
 			if err != nil {
-				if err == io.EOF {
-					c.close()
-					return
-				}
 				log.Printf("read failed: %s\n", err)
+				c.close()
+				return
 			}
 			c.recvBuf <- buf[:n]
 		}
